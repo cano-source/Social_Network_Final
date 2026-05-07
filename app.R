@@ -13,7 +13,7 @@ library(igraph)
 library(tidygraph)
 library(ggraph)
 
-library(palmerpenguins)
+#library(palmerpenguins)
 library(visNetwork)
 library(bslib)#this is for background 
 
