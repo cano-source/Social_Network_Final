@@ -13,7 +13,6 @@ library(igraph)
 library(tidygraph)
 library(ggraph)
 
-#library(palmerpenguins)
 library(visNetwork)
 library(bslib)#this is for background 
 
@@ -31,43 +30,17 @@ ui <-fluidPage(
     sidebar = sidebar ("Menu options"), 
     card(
       card_header("Project information"), "This is an Undirected Monster High Network based on movies and webisodes during the Generation 1 era, except Great Scarier reef. This network contains 113 nodes and 500 edges. And has attributes such as gender and the type of monster they are. "),
+    
     card(
-      card_header("Dynamic Demo 1"), "you could put a caption like so",
-      selectInput("select", 
-                  "select an option", #the a and b down below determines output
-                  choices = list("Option A" = "A", 
-                                 "Option B" = "B"),
-                  selected =1), 
-      textOutput("ourVariable")
-    ), 
-    
-    card(card_header("here's a network!"),
-         selectInput("size",
-                     "choose a centrality measure", 
-                     choices = list("Degree Centrality" = "degree", 
-                                    "Betweenness Centrality" = "betweenness"), 
-                     selected = 1), 
-         plotOutput("example_network"), height = "400px"),
-    
-    
-    #card(
-   #   card_header("Monster Type"),
-    #  "Distribution of different monster types in the network",
-     # radioButtons("monster_plot_type",
-      #             "Plot Type:",
-       #            choices = c("Count" = "count",
-        #                       "Average Degree by Type" = "avg_degree",
-         #                      "Average Betweenness by Type" = "avg_betweenness"),
-          #         selected = "count"),
-   #   plotOutput("monster_type_plot"),
-    #  height = "500px"
-    #),
-  # new code ends here  
-    
-    
+      card_header("Ghouls Gender"), "Distribution of character genders in the Monster High network",
+      plotOutput("gender_barplot"),
+      height = "400px"
+      
+    ),
+  
     
     card(card_header("Monster High Interactive Network"), 
-         "Choose your centrality measure and see what ghouls are connected by clicking on any of the nodes", 
+         "Choose your centrality measure and see what ghouls are connected by clicking on any of the nodes. The edges are already weighted for you.", 
          radioButtons("size_by", "Centrality Measure", 
                       choices = c("Degree" = "degree", 
                                   "Betweenness Centrality" = "betweenness"), 
@@ -82,22 +55,6 @@ ui <-fluidPage(
 server <- function(input, output) {
   
   # CARD 1 
-  
-  output$ourVariable <- renderText({
-    paste("Our selected option is", input$select)
-  })
-  
-  # let's create a simple example network with 10 nodes and calulate the degree centrality
-  
-  
-  
-  
-  
-  
-  
-  
-  # CARD 2 
-  
   MH_nodes <- read.csv("MonsterHigh_nodes.csv")
   MH_edges <- read.csv("MonsterHigh_edges.csv")
   
@@ -113,93 +70,41 @@ server <- function(input, output) {
            closeness = centrality_closeness(), 
            eigenvector = centrality_eigen(weights = Weight))
   
-  network <- reactive({
-    #ex_net <- play_gnp(n = 10, p = 0.5, directed = FALSE)
+  output$gender_barplot <- renderPlot({
+    node_data <- MH_net|>
+      activate(nodes)|>
+      as_tibble()
     
-    MH_net <- MH_net |> 
-      as_tbl_graph()|> 
-      activate(nodes) |> 
-      mutate(
-        degree = centrality_degree(), 
-        betweenness = centrality_betweenness())
+    gender_counts <- node_data |>
+      count(Gender) |>
+      arrange(desc(n))
     
-    MH_net
+    ggplot(gender_counts, aes(x= reorder(Gender, n), y= n))+
+      geom_col(fill = "hotpink", color = "pink", alpha = 0.8) +
+      geom_text(aes(label = n), hjust = -0.3, size = 5, fontface = "bold", color= "hotpink") +
+      coord_flip() +
+      labs(
+        x = "Gender",
+        y = "Count",
+        title = "Ghoul's Genders in Monster High Network") +
+      theme_minimal()+
+      theme( #this all helps it look more appealing 
+        plot.background = element_rect(fill= "#000000", color=NA),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+    
+        plot.title = element_text(hjust = 0.5, face = "bold", size = 14, color="hotpink"),
+        axis.text = element_text(size = 11, color = "hotpink"),
+        axis.title = element_text(size = 12, face = "bold", color= "hotpink")
+      ) +
+      ylim(0, max(gender_counts$n) * 1.1)
+    
   })
   
-  # now let's get it visualized and reactive to our choice from above! 
-  
-  output$example_network <- renderPlot({
-    MH_net <- network() 
-    
-    p<- ggraph(MH_net, layout = "auto") +
-      geom_edge_link(alpha = 0.3, color = "grey80") + 
-      geom_node_point(aes(size = .data[[input$size]]),
-                      color = "pink") + 
-      scale_size_continuous(range = c(.5, 10)) + 
-      labs(Nodes = input$size) + 
-      theme_graph()
-    #don't forget to call it or it will not work
-    p
-  })
-  
-  output$example_network <- renderPlot({
-    MH_net <- network() 
-    
-    p<- ggraph(MH_net, layout = "auto") +
-      geom_edge_link(alpha = 0.3, color = "grey80") + 
-      geom_node_point(aes(size = .data[[input$size]]),
-                      color = "pink") + 
-      scale_size_continuous(range = c(.5, 10)) + 
-      labs(Nodes = input$size) + 
-      theme_graph()
-    #don't forget to call it or it will not work
-    p
-  })
-  
-  # NEW: BARPLOT OUTPUT
-  
-#  output$attribute_barplot <- renderPlot({
-    # Get node data with all attributes
- #   node_data <- MH_net |>
-#      activate(nodes) |>
- #     as_tibble() |>
-  #    mutate(node_name = if("Label" %in% names(.)) Label else name)
-    
-    # Filter to top N if checkbox is selected
-  #  if (input$show_top_n) {
-  #    node_data <- node_data |>
-   #     arrange(desc(.data[[input$bar_attribute]])) |>
-    #    slice_head(n = 10)
-   # }
-    
-    # Create barplot
-  #  ggplot(node_data, aes(x = reorder(node_name, .data[[input$bar_attribute]]), 
-     #                     y = .data[[input$bar_attribute]])) +
-   #   geom_col(fill = "hotpink", color = "black", alpha = 0.8) +
-    #  coord_flip() +
-     # labs(
-      #  x = "Node",
-       # y = input$bar_attribute,
-  #      title = paste("Node", input$bar_attribute)
-   #   ) +
-    #  theme_minimal() +
-     # theme(
-      #  plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-       # axis.text = element_text(size = 10),
-      #  axis.title = element_text(size = 12, face = "bold")
-      #)
-#  })
-  
-  
-  
-  
-
-  
+  # CARD 2 
   
   
   # CARD 3 
-  
-  # we're going to use another example network like from above but visNetwork requires separate edge and nodes lists 
   
   network2 <- reactive({
     
