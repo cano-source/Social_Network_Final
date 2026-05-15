@@ -76,8 +76,8 @@ ui <-fluidPage(
       
     
     card(card_header("Monster High Interactive Network: "), 
-         "Toggle between degree centrality and betweenness centrality, to see what ghouls are connected by clicking on any of the nodes. The edges are weighted to showcase what ghouls have a stronger connection, as they had more screen time or meantioned each other more frequently.
-         This demonstartes how monster high focuses on 4 main characters and has built various other charcaters around them. As when you toggle between centralities our main 4 keep their nodes big, showing that there isn't just one main ghoul who runs the movies and show.", 
+         "Toggle between degree centrality and betweenness centrality, to see what ghouls are connected by clicking on any of the nodes. The edges are weighted to showcase what ghouls have a stronger connection, as they had more screen time or mentioned each other more frequently.
+         This demonstrates how monster high focuses on 4 main characters and has built various other characters around them. As when you toggle between centralities our main 4 keep their nodes big, showing that there isn't just one main ghoul who runs the movies and show.", 
          radioButtons("size_by", "Centrality Measure", 
                       choices = c("Degree" = "degree", 
                                   "Betweenness Centrality" = "betweenness"), 
